@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np 
 import torch 
 
-from utils.logger import log
+import logging
 
 
 
@@ -14,6 +14,8 @@ class Attr(ABC):
         self.map = None 
         self.text_encoder = None
         self.transformer = lambda x: x
+
+        self.logger = logging.getLogger(__name__) 
 
     @abstractmethod
     def len(self):
@@ -42,19 +44,19 @@ class CategoricalAttr(Attr):
         self.name = name
         
         self.values = sorted(values)
-        self.values_ids = {self.values[i]: i for i in range(len(self.values))}  
+        self.values_ids = {self.values[i]: i for i in range(len(self.values))} 
 
     def len(self):
         return len(self.values)
     
     def get_id(self, x):
         if (x not in self.values_ids.keys()):
-            log('CategoricalAttr %s: value not found. Return default' %(self.name), 'debug')
+            self.logger.debug(f"CategoricalAttr {self.name}: value not found. Return default")
             
         return self.values_ids.get(x, 0)
 
     def get_vector(self, x):
-        assert type(self.vectors) != type(None), 'CategoricalAttr: Attribute\'s vectors not initialized'
+        assert type(self.vectors) != type(None), "CategoricalAttr: Attribute's vectors not initialized"
 
         return self.transformer(self.vectors[self.get_id(x)])
 
@@ -84,12 +86,12 @@ class MultiCategoricalAttr(Attr):
     
     def get_id(self, x):
         if (x not in self.values_ids.keys()):
-            log('MultiCategoricalAttr %s: value not found. Return default' %(self.name), 'debug')
+            self.logger.debug(f"MultiCategoricalAttr {self.name}: value not found. Return default")
             
         return self.values_ids.get(x, 0)
 
     def get_vector(self, x):
-        assert type(self.vectors) != type(None), 'MultiCategoricalAttr: Attribute\'s vectors not initialized'
+        assert type(self.vectors) != type(None), "MultiCategoricalAttr: Attribute's vectors not initialized"
         
         values = x.split('+')
         return [self.transformer(self.vectors[self.get_id(x)]) for x in values]
@@ -115,7 +117,7 @@ class VectorAttr(Attr):
         
         self.means = torch.FloatTensor(list(means)).flatten()
         self.stds = torch.FloatTensor(list(stds)).flatten()
-        assert self.means.shape == self.stds.shape, 'means and stds list are of different shape'
+        assert self.means.shape == self.stds.shape, "means and stds list are of different shape"
 
         self.v_dim = len(self.means)
 
@@ -127,7 +129,7 @@ class VectorAttr(Attr):
         return None
     
     def get_vector(self, x):
-        assert type(self.map) != type(None), 'VectorAttr: Attribute\'s mapping not initialized' 
+        assert type(self.map) != type(None), "VectorAttr: Attribute's mapping not initialized"
         
         if (type(x) != str):
             x = str(x)

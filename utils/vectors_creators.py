@@ -2,30 +2,33 @@ import os
 import numpy as np 
 import torch 
 from transformers import AutoTokenizer, AutoModel
+import logging
 
 from utils.attr_info import CategoricalAttr, MultiCategoricalAttr, VectorAttr
-from utils.logger import log
 
 
 
 def _generate_orthonormal_vectors(n_vectors, dim):
 
+    logger = logging.getLogger(__name__)
+
     # orthogonal
     if (n_vectors <= dim):
-        log('utils._generate_orthonormal_vectors: getting exactly orthonormal vectors (n_vectors %d <= dim %d)' %(n_vectors, dim), 'info')
+        logger.info(f"utils._generate_orthonormal_vectors: getting exactly orthonormal vectors (n_vectors {n_vectors} <= dim {dim})")
 
         A = np.random.normal(size=(dim, dim))
         Q = np.linalg.qr(A)[0][:n_vectors, :]
+
     # almost orthogonal    
     else:
-        log('utils._generate_orthonormal_vectors: getting approximately orthonormal vectors (n_vectors %d > dim %d)' %(n_vectors, dim), 'info')
+        logger.info(f"utils._generate_orthonormal_vectors: getting approximately orthonormal vectors (n_vectors {n_vectors} > dim {dim})")
 
         Q = np.random.normal(size=(n_vectors, dim))
         norms = np.linalg.norm(Q, axis=1)
         Q = Q/norms.reshape(-1, 1)
 
         cs = np.abs(Q @ Q.T) - np.eye(n_vectors)
-        log('utils._generate_orthonormal_vectors: maximum (abs) cosine similarity: %.2f' %(np.max(cs)), 'debug')
+        logger.debug(f"utils._generate_orthonormal_vectors: maximum (abs) cosine similarity: {np.max(cs):.2f}")
     
     return Q
 
@@ -49,6 +52,8 @@ def random_vectors(attr_list, dim):
 
 
 def pretrained_vectors(attr_list, vectors_path, dim):
+
+    logger = logging.getLogger(__name__)
 
     vectors_list = np.load(os.path.join(vectors_path, '%d.npy' %(dim)), allow_pickle=True)
 
@@ -74,7 +79,7 @@ def pretrained_vectors(attr_list, vectors_path, dim):
 
     # generate randomly any remaining attributes
     if (remain_vectors > 0):
-        log('load_pretrained_vectors: %d vectors were not found. generating them randomly...' %(remain_vectors), 'info')
+        logger.info(f"load_pretrained_vectors: {remain_vectors} vectors were not found. generating them randomly...")
 
         total_vectors = _generate_orthonormal_vectors(remain_vectors, dim)
 
