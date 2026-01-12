@@ -8,8 +8,9 @@ import torch
 import copy
 import datasets
 import pickle
-import dgl 
+# import dgl 
 import argparse
+import logging
 
 from joblib import Parallel, delayed
 
@@ -20,7 +21,6 @@ import task_generators.protein_tasks as protein_tasks
 from utils.attr_info import CategoricalAttr, TextAttr, VectorAttr
 from utils.encoders import GraphEncoder
 
-from utils.logger import log, set_log
 
 ########################################### <LLM prompt/response> ###########################################
 '''
@@ -677,20 +677,23 @@ if __name__ == "__main__":
     parser.add_argument('--nodewise', action='store_true')
     parser.add_argument('--levels', type=int, default=1)
 
-    parser.add_argument('--verbose', type=int, default=1)
+    parser.add_argument('--verbose', type=int, default=20)
 
     args = parser.parse_args()
 
-    set_log(args.verbose)
+
+    logging.basicConfig(level=args.verbose, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+    logger = logging.getLogger(__name__)
+
 
     if (args.dataset == 'graphqa'):
-        log('encoding graphQA graphs...', 'info')
+        logger.info("encoding graphQA graphs...")
         encode_graphqa('data/graphqa/graphs', args.method, args.dim, args.vectors, args.nodewise, args.levels)
-        log('Done', 'info')
+        logger.info("encoding graphQA graphs... [DONE]")
 
-        log('creatting graphQA tasks...', 'info')
+        logger.info("creatting graphQA tasks...")
         create_tasks_graphqa('data/graphqa/graphs', 'data/graphqa/tasks')
-        log('Done', 'info')
+        logger.info("creatting graphQA tasks... [DONE]")
 
     elif (args.dataset == 'graphreasoning'):
         for task in ['bgm', 'mts', 'sc', 'sp']:
@@ -698,31 +701,15 @@ if __name__ == "__main__":
             encode_graphreasoning(os.path.join('data/graphreasoning', task), args.method, args.dim, args.vectors, args.nodewise, args.levels)
         create_tasks_graphreasoning('data/graphreasoning')
     
-    elif (args.dataset == 'hypergraphqa'):
-        print ('not implemented yet')
-    
-    elif (args.dataset == 'PPID'):
-        log('converting PPID to graphml files...', 'info')
-        PPID_to_graphs('data/PPID')
-        log('Done', 'info')
-
-        log('encoding PPID graphs...', 'info')
-        encode_PPID('data/PPID/', args.method, args.dim, args.vectors, args.nodewise, args.levels)
-        log('Done', 'info')
-
-        log ('create_tasks_PPID not implemented yet', 'info')
-    
     elif (args.dataset == 'jaffe'):
         jaffe_to_graphs('data/jaffe/jaffe_abbert', 'data/jaffe/graphs')
         encode_jaffe('data/jaffe/graphs', args.method, args.dim, args.vectors, args.nodewise, args.levels)
         create_tasks_jaffe('data/jaffe/graphs', 'data/jaffe/tasks')
     
     elif (args.dataset == 'obnb'):
-        log('converting obnb to graphml files...', 'info')
+        
         obnb_to_graphs('data/obnb/obnbench_data', 'data/obnb/')
-        log('Done', 'info')
 
-        log('encoding obnb graphs...', 'info')
         for name in ['BioGRID_DISEASES', 'ComPPIHumanInt_DISEASES', 'FunCoup_DISEASES', 'HumanBaseTopGlobal_DISEASES', 'HuMAP_DISEASES',
                      'OmniPath_DISEASES', 'ProteomeHD_DISEASES', 'STRING_DISEASES', 'BioGRID_DisGeNET', 'ComPPIHumanInt_DisGeNET', 'FunCoup_DisGeNET',
                      'HumanBaseTopGlobal_DisGeNET', 'HuMAP_DisGeNET', 'OmniPath_DisGeNET', 'ProteomeHD_DisGeNET', 'STRING_DisGeNET', 'BioGRID_GOBP',
@@ -732,11 +719,5 @@ if __name__ == "__main__":
                      'PCNet_DisGeNET', 'SIGNOR_DisGeNET', 'BioPlex_GOBP', 'ConsensusPathDB_GOBP', 'HIPPIE_GOBP', 'HumanNet_GOBP', 'HuRI_GOBP',
                      'PCNet_GOBP', 'SIGNOR_GOBP']:
             encode_obnb(os.path.join('data/obnb/', name, 'graphs'), args.method, args.dim, args.vectors, args.nodewise, args.levels)
-        log('Done', 'info')
     
 
-    elif (args.dataset == 'GraphWiz'):
-
-        log('encoding GraphWiz graphs...', 'info')
-        encode_GraphWiz('data/GraphWiz/graphs', args.method, args.dim, args.vectors, args.nodewise, args.levels)
-        log('Done', 'info')
