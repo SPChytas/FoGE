@@ -8,8 +8,7 @@ import numpy as np
 import os 
 from tqdm.auto import tqdm
 import pickle
-
-from utils.logger import log
+import logging
 
 
 
@@ -29,7 +28,8 @@ class LLMDataset(Dataset):
         labels_pd = pd.read_csv(os.path.join(self.labels_file))
         self.labels_pd = labels_pd[labels_pd['path'].str.contains(self.split)]
 
-        log('LLMDataset: keep %d rows for split %s' %(self.labels_pd.shape[0], self.split), 'info')
+        self.logger = logging.getLogger(__name__)
+        self.logger.info('LLMDataset: keep %d rows for split %s' %(self.labels_pd.shape[0], self.split))
 
         self.data = None
 
@@ -39,7 +39,7 @@ class LLMDataset(Dataset):
 
         if (self.preload):
 
-            log('LLMDataset: preloading symbols', 'info')
+            self.logger.info('LLMDataset: preloading symbols')
 
             self.data = {'symbol': [], 
                          'input': [], 
@@ -116,15 +116,17 @@ class GraphDatasetSimple(Dataset):
         self.split = split
         self.method = method
 
+        self.logger = logging.getLogger(__name__)
+
 
         labels_pd = pd.read_csv(os.path.join(self.labels_file))
         self.labels_pd = labels_pd[labels_pd['path'].str.contains(self.split)]
 
-        log('GraphDataset: keep %d rows for split %s' %(self.labels_pd.shape[0], self.split), 'info')
+        self.logger.info('GraphDataset: keep %d rows for split %s' %(self.labels_pd.shape[0], self.split))
 
         self.data = None
 
-        log('GraphDataset: preloading symbols', 'info')
+        self.logger.info('GraphDataset: preloading symbols')
 
         self.data = {'symbol': [], 
                      'output': []}

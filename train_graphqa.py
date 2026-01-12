@@ -6,9 +6,10 @@ from torch.utils.data import random_split
 from tqdm.auto import tqdm
 import argparse
 import matplotlib.pyplot as plt 
+import logging
 
 from dataset import GraphDatasetSimple
-from utils.logger import log, set_log
+
 from utils.metrics import Accuracy, MSE
 
 
@@ -39,12 +40,12 @@ class OneHiddenModel(nn.Module):
         return x
 
 
-set_log(2)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+logger = logging.getLogger(__name__)
 
 
 
-
-target = 'links_count'
+target = 'edge_count'
 
 
 
@@ -56,14 +57,9 @@ if (target == 'has_cycle'):
 else:
     loss_function = nn.MSELoss()
 
-# train_dataset = GraphDatasetSimple('data/hypergraphqa/tasks/%s.csv' %(target), 'train', '1024.hrr')
-# valid_dataset = GraphDatasetSimple('data/hypergraphqa/tasks/%s.csv' %(target), 'valid', '1024.hrr')
-# test_dataset = GraphDatasetSimple('data/hypergraphqa/tasks/%s.csv' %(target), 'test', '1024.hrr')
-
-
-data = GraphDatasetSimple('data/graphqa/tasks/%s.csv' %(target), '', '512.hrr', single_file=True)
-train_dataset, valid_dataset, test_dataset, _ = random_split(data, [0.16, 0.02, 0.02, 0.8])
-
+train_dataset = GraphDatasetSimple('data/graphqa/tasks/%s.csv' %(target), 'train', 'node_id_512_hrr_single_1')
+valid_dataset = GraphDatasetSimple('data/graphqa/tasks/%s.csv' %(target), 'valid', 'node_id_512_hrr_single_1')
+test_dataset = GraphDatasetSimple('data/graphqa/tasks/%s.csv' %(target), 'test', 'node_id_512_hrr_single_1')
 
 train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
 valid_loader = DataLoader(valid_dataset, batch_size=128, shuffle=False)
@@ -84,13 +80,15 @@ for epoch in range(2000):
         loss.backward()
         optimizer.step()
 
-        pbar.set_description('Loss: %.8f' %(loss.item()))
+        pbar.set_description('%d. Loss: %.8f' %(epoch+1, loss.item()))
 
     
     if (target == 'has_cycle'):
         metric = Accuracy()
+        metric_name = 'Accuracy'
     else:
         metric = MSE()
+        metric_name = 'MSE'
     metric.reset()
 
     pbar = tqdm(valid_loader, total=len(valid_loader))
@@ -102,7 +100,7 @@ for epoch in range(2000):
         res = metric.result()
         
 
-        pbar.set_description('Accuracy: %.3f' %(res))
+        pbar.set_description('%d. %s: %.3f' %(epoch+1, metric_name, res))
 
 
 
@@ -130,7 +128,7 @@ for X, y in pbar:
     total_y.extend(list(y.detach().numpy()))
     total_y_pred.extend(list(y_pred.detach().numpy()))
 
-    pbar.set_description('Accuracy: %.3f' %(res))
+    pbar.set_description('Train %s: %.3f' %(metric_name, res))
 
 
 plt.scatter(total_y, total_y_pred, alpha=0.01)
@@ -161,7 +159,7 @@ for X, y in pbar:
     total_y.extend(list(y.detach().numpy()))
     total_y_pred.extend(list(y_pred.detach().numpy()))
 
-    pbar.set_description('Accuracy: %.3f' %(res))
+    pbar.set_description('Test %s: %.3f' %(metric_name, res))
 
 
 plt.scatter(total_y, total_y_pred, alpha=0.01)
