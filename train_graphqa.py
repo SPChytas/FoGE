@@ -44,7 +44,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 logger = logging.getLogger(__name__)
 
 
-
+# One name from data/graphqa/tasks
 target = 'edge_count'
 
 

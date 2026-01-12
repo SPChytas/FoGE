@@ -1,4 +1,4 @@
-# FoGE_minimal
+# FoGE
 
 
 The main functionality is provided in the `utils` folder.
@@ -12,4 +12,10 @@ The main functionality is provided in the `utils` folder.
 4. After obtain the vocabulary (i.e., the symbol/vector associated with each value of each attribute), we employ an encoder to encode the graphical structures. The encoder is located in `encoders.py` and it encodes the graph's structure, all node attributes and all edge attributes according to the formulas of the paper.
 
 
-Examples of the whole encoding pipeline can be found on dataset_preparation.py
+## Basic run on GraphQA
+
+GraphQA is already located on `data/graphqa`
+
+1. First, execute `python dataset_preparation.py` to encode each graph and prepare the corresponding labels
+2. Second, run `train_graphqa.py` to examine the performance of a small neural network on the generated labels.
+
