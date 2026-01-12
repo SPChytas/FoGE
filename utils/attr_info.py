@@ -6,6 +6,9 @@ import logging
 
 
 
+def _identity(x):
+    return x
+
 class Attr(ABC):
 
     @abstractmethod
@@ -13,10 +16,7 @@ class Attr(ABC):
         self.vectors = None 
         self.map = None 
         self.text_encoder = None
-        self.transformer = lambda x: x
-
-        self.logger = logging.getLogger(__name__) 
-
+        self.transformer = _identity
     @abstractmethod
     def len(self):
         pass 
@@ -50,8 +50,10 @@ class CategoricalAttr(Attr):
         return len(self.values)
     
     def get_id(self, x):
+        logger = logging.getLogger(__name__) 
+
         if (x not in self.values_ids.keys()):
-            self.logger.debug(f"CategoricalAttr {self.name}: value not found. Return default")
+            logger.debug(f"CategoricalAttr {self.name}: value not found. Return default")
             
         return self.values_ids.get(x, 0)
 
@@ -59,7 +61,6 @@ class CategoricalAttr(Attr):
         assert type(self.vectors) != type(None), "CategoricalAttr: Attribute's vectors not initialized"
 
         return self.transformer(self.vectors[self.get_id(x)])
-
 
 
 class MultiCategoricalAttr(Attr):
@@ -85,8 +86,10 @@ class MultiCategoricalAttr(Attr):
         return len(self.values)
     
     def get_id(self, x):
+        logger = logging.getLogger(__name__) 
+
         if (x not in self.values_ids.keys()):
-            self.logger.debug(f"MultiCategoricalAttr {self.name}: value not found. Return default")
+            logger.debug(f"MultiCategoricalAttr {self.name}: value not found. Return default")
             
         return self.values_ids.get(x, 0)
 
@@ -95,7 +98,6 @@ class MultiCategoricalAttr(Attr):
         
         values = x.split('+')
         return [self.transformer(self.vectors[self.get_id(x)]) for x in values]
-
 
 
 class VectorAttr(Attr):
